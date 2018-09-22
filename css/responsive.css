@@ -1,0 +1,68 @@
+@media only screen and (min-width: 412px) and (max-width: 991px) {
+    .game-header {
+        font-size: 140%;
+    }
+
+    .game-header h1 {
+        font-size: 260%;
+    }
+
+    .game-header .restart i {
+        font-size: 150%;
+    }
+
+    .leaderboard-entry {
+        height: 45px;
+    }
+
+    .btn-show-leaderboard {
+        font-size: 150%;
+    }
+
+    .btn-show-leaderboard:hover {
+        font-size: 145%;
+    }
+
+    .btn-show-leaderboard i {
+        font-size: 100px;
+    }
+
+    .score-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-top: -40px;
+    }
+
+    .score-panel .restart {
+        text-align: center;
+    }
+
+    .message-box-user-info {
+        width: 550px;
+        height: 680px;
+        font-size: 130%;
+    }
+
+    .leaderboard-section {
+        width: 450px;
+        font-size: 170%;
+    }
+        
+    .btn-leaderboard-section-close {
+        font-size: 170%;
+    }
+
+    .btn-leaderboard-section-close:hover {
+        font-size: 160%;
+    }
+
+    .btn-leaderboard-section-close:active {
+        font-size: 150%;
+    }
+    
+    .deck {
+        margin-right: 9px;
+    }
+}

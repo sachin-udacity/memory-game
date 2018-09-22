@@ -1,0 +1,186 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Matching Game</title>
+    <meta name="description" content="">
+    <!--<link rel="stylesheet prefetch" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="main-container">
+    <section class="display-flex-container container">
+        <div class="game-section display-flex-container">
+            <header class="game-header display-flex-container">
+                <section class="game-header-left display-flex-container">
+                    <div>
+                        <h1>Memory Game</h1>
+                    </div>
+                    <div class="score-panel">
+                        <ul class="stars">
+                            <li><i class="fa fa-star"></i></li>
+                            <li><i class="fa fa-star"></i></li>
+                            <li><i class="fa fa-star"></i></li>
+                            <li><i class="fa fa-star"></i></li>
+                            <li><i class="fa fa-star"></i></li>
+                            <li><i class="fa fa-star"></i></li>
+                        </ul>
+                        <span class="moves">3 Moves</span>
+                        <div class="restart">
+                            <span class="timer">00:00</span>
+                            <i class="fa fa-repeat"></i>
+                        </div>
+                    </div>
+                </section>
+                <section class="game-header-right display-flex-container">
+                    <button id="btn-show-leaderboard" class="btn-show-leaderboard display-flex-container">
+                       <i class="fa fa-list-ol"></i>
+                       <span>LeaderBoard</span>
+                    </button>
+                </section>
+            </header>
+            <ul id="deck-cards" class="deck no-select">
+                <!-- Cards are dynamically created -->
+            </ul>
+        </div>
+        <aside class="leaderboard-section">
+            <div class="leaderboard-section-header">
+                <h2 class="leaderboard-title">Leader Board</h2>
+                <button id="btn-leaderboard-section-close" class="btn-leaderboard-section-close">
+                    <i class="fa fa-close"></i>
+                </button>
+            </div>
+            <div class="leaderboard-list-header">
+                <div class="lb-user-title">User</div>
+                <div class="lb-track-title">Track</div>
+                <div class="lb-score-title">Score</div>
+                <hr />
+            </div>
+            <h3 class="leaderboard-level-title">Level - Advanced</h3>
+            <ul class="leaderboard-levels leaderboard-level-advanced"></ul>
+            <h3 class="leaderboard-level-title">Level - Intermediate</h3>
+            <ul class="leaderboard-levels leaderboard-level-intermediate"></ul>
+            <h3 class="leaderboard-level-title">Level - Beginner</h3>
+            <ul class="leaderboard-levels leaderboard-level-beginner"></ul>
+        </aside>
+    </section>
+    <!--User Info-->
+    <dialog id="message-box-user" class="message-box">
+        <form id="message-box-game-user-info" class="display-flex-container message-box-container message-box-user-info" method="dialog">
+            <section class="display-flex-container message-box-header">
+                <h2>Welcome to Memory Game</h2>
+                <a href="https://github.com/sachin-udacity/memory-game/blob/master/PrivacyNotice.md" target="_blank" title="Click to see Privacy Notice">
+                    <i class="fa fa-info-circle"></i>
+                </a>
+            </section>
+            <section class="message-box-body">
+                <div id="message-box-progress-ring" class="display-flex-container message-box-progress-ring hidden">
+                    <div class="message-box-progress-ring-upper">
+                        <i class="fa fa-cog fa-spin"></i>
+                    </div>
+                    <div class="message-box-progress-ring-lower">
+                        <i class="left fa fa-gear fa-spin"></i>
+                        <i class="right fa fa-gear fa-spin"></i>
+                    </div>
+                    <div class="message-box-progress-wait-text">
+                        <p>Please wait starting the game ...</p>
+                    </div>
+                </div>
+                <div id="message-box-content" class="message-box-body-content">
+                    <div>
+                        <span class="message-box-label">User name: </span>
+                        <input id="message-box-input-user-id" style="display:none;" value="00000000-0000-0000-0000-000000000000" />
+                        <input id="message-box-input-user-name" class="message-box-input" />
+                    </div>
+                    <div>
+                        <span class="message-box-label">Slack handle (optional): </span>
+                        <input id="message-box-input-slack-handle" class="message-box-input" />
+                    </div>
+                    <div>
+                        <span class="message-box-label">Nanodegree Track (optional) : </span>
+                        <select id="message-box-input-degree-track" class="message-box-input">
+                            <option value="None">None</option>
+                            <option value="Front End">Front End</option>
+                            <option value="Mobile Web Specialist">Mobile Web Specialist</option>
+                            <option value="Android Basics">Android Basics</option>
+                            <option value="Android Developer">Android Developer</option>
+                        </select>
+                    </div>
+                    <div class="message-box-game-level-guest-group">
+                        <span class="message-box-label">Game level : </span>
+                        <select id="message-box-input-game-level" class="message-box-input">
+                            <option value="1">Beginner</option>
+                            <option value="2">Intermediate</option>
+                            <option value="3">Advanced</option>
+                        </select>
+                        <label class="checkbox-container">
+                            Continue as a guest
+                            <input id="message-box-is-guest" type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+            <section class="message-box-footer">
+                <p id="message-box-error" class="message-box-error hidden">
+                    User already exists.
+                </p>
+                <input id="btn-message-box-play" class="btn btn-message-box btn-message-box-play" value="   Play   " type="button"/>
+            </section>
+        </form>
+    </dialog>
+    <!--Game End-->
+    <dialog id="message-box-game" class="message-box">
+        <div class="display-flex-container message-box-container message-box-container-game">
+            <section class="display-flex-container message-box-header message-box-header-congrats">
+                <h2>Congratulations! You Won!</h2>
+            </section>
+            <section class="message-box-body message-box-body-game">
+                <div class="message-box-body-game-left">
+                    <div class="message-box-body-row">
+                        <span>Ratings: </span>
+                        <span class="message-box-game-rating">0</span>
+                    </div>
+                    <div class="message-box-body-row">
+                        <span>Moves: </span>
+                        <span class="message-box-game-moves">0</span>
+                    </div>
+                    <div class="message-box-body-row">
+                        <span>Time Taken: </span>
+                        <span class="message-box-game-time-elapsed">0</span>
+                    </div>
+                </div>
+                <div class="message-box-body-game-right">
+                    <!-- TODO:Apply message-box-body-game-score-bkground for styling-->
+                    <div class="display-flex-container message-box-body-game-score-container">
+                        <p id="message-box-body-game-score" class="message-box-body-game-score hidden">-</p>
+                        <!--Progress Ring-->
+                        <div id="message-box-game-progress-ring" class="display-flex-container message-box-game-progress-ring">
+                            <div class="message-box-progress-ring-upper">
+                                <i class="fa fa-cog fa-spin"></i>
+                            </div>
+                            <div class="message-box-progress-ring-lower">
+                                <i class="left fa fa-gear fa-spin"></i>
+                                <i class="right fa fa-gear fa-spin"></i>
+                            </div>
+                            <div class="message-box-game-progress-wait-text">
+                                <p>Please wait, calculating score ...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="message-box-footer">
+                <input id="btn-message-box-start-over" class="btn btn-message-box btn-message-box-start-over" value="Start Over" type="button" />
+                <input id="btn-message-box-cancel" class="btn btn-message-box btn-message-box-cancel" value="Cancel" type="button" />
+            </section>
+        </div>
+    </dialog>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/serviceconfig.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
