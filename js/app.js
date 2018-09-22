@@ -168,6 +168,7 @@ MGA.UI = {
     showModalDialog: function (dialogId) {
         try {
             let dialog = document.getElementById(dialogId);
+            dialogPolyfill.registerDialog(dialog);
             if (dialog) {
                 dialog.showModal();
             }
