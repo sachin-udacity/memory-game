@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Matching Game</title>
     <meta name="description" content="">
-    <!--<link rel="stylesheet prefetch" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">-->
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="icon" type="image/png" href="./img/game-icon.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="polyfill/dialog-polyfill.css">
-    <link rel="stylesheet" href="css/app.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <link href="css/app.css" rel="stylesheet">
+    <link href="css/responsive.css" rel="stylesheet">
 </head>
-<body class="main-container">
+<body id="main-container" class="main-container">
     <section class="display-flex-container container">
         <div class="game-section display-flex-container">
             <header class="game-header display-flex-container">
@@ -49,28 +49,35 @@
         </div>
         <aside class="leaderboard-section">
             <div class="leaderboard-section-header">
-                <h2 class="leaderboard-title">Leader Board</h2>
+                <h2 class="leaderboard-title">LeaderBoard</h2>
                 <button id="btn-leaderboard-section-close" class="btn-leaderboard-section-close">
                     <i class="fa fa-close"></i>
                 </button>
             </div>
             <div class="leaderboard-list-header">
                 <div class="lb-user-title">User</div>
-                <div class="lb-track-title">Track</div>
                 <div class="lb-score-title">Score</div>
                 <hr />
             </div>
-            <h3 class="leaderboard-level-title">Level - Advanced</h3>
-            <ul class="leaderboard-levels leaderboard-level-advanced"></ul>
-            <h3 class="leaderboard-level-title">Level - Intermediate</h3>
-            <ul class="leaderboard-levels leaderboard-level-intermediate"></ul>
-            <h3 class="leaderboard-level-title">Level - Beginner</h3>
-            <ul class="leaderboard-levels leaderboard-level-beginner"></ul>
+            <div class="leader-scores">
+                <h3 class="leaderboard-level-title">Level - Advanced</h3>
+                <ul class="leaderboard-levels leaderboard-level-advanced">
+                    <li class="empty-leaderboard-list">Unable to retrieve entries.</li>
+                </ul>
+                <h3 class="leaderboard-level-title">Level - Intermediate</h3>
+                <ul class="leaderboard-levels leaderboard-level-intermediate">
+                    <li class="empty-leaderboard-list">Unable to retrieve entries.</li>
+                </ul>
+                <h3 class="leaderboard-level-title">Level - Beginner</h3>
+                <ul class="leaderboard-levels leaderboard-level-beginner">
+                    <li class="empty-leaderboard-list">Unable to retrieve entries.</li>
+                </ul>
+            </div>
         </aside>
     </section>
     <!--User Info-->
-    <dialog id="message-box-user" class="message-box">
-        <form id="message-box-game-user-info" class="display-flex-container message-box-container message-box-user-info" method="dialog">
+    <div id="message-box-user" class="message-box message-box-user">
+        <div id="message-box-game-user-info" class="display-flex-container message-box-container message-box-user-info">
             <section class="display-flex-container message-box-header">
                 <h2>Welcome to Memory Game</h2>
                 <a href="https://github.com/sachin-udacity/memory-game/blob/master/PrivacyNotice.md" target="_blank" title="Click to see Privacy Notice">
@@ -87,7 +94,7 @@
                         <i class="right fa fa-gear fa-spin"></i>
                     </div>
                     <div class="message-box-progress-wait-text">
-                        <p>Please wait starting the game ...</p>
+                        <p id="message-box-user-wait-msg">Please wait starting the game ...</p>
                     </div>
                 </div>
                 <div id="message-box-content" class="message-box-body-content">
@@ -131,10 +138,10 @@
                 </p>
                 <input id="btn-message-box-play" class="btn btn-message-box btn-message-box-play" value="   Play   " type="button"/>
             </section>
-        </form>
-    </dialog>
+        </div>
+    </div>
     <!--Game End-->
-    <dialog id="message-box-game" class="message-box">
+    <div id="message-box-game" class="message-box message-box-game">
         <div class="display-flex-container message-box-container message-box-container-game">
             <section class="display-flex-container message-box-header message-box-header-congrats">
                 <h2>Congratulations! You Won!</h2>
@@ -143,7 +150,9 @@
                 <div class="message-box-body-game-left">
                     <div class="message-box-body-row">
                         <span>Ratings: </span>
-                        <span class="message-box-game-rating">0</span>
+                        <ul class="message-box-game-rating stars">
+                            <!-- Copy stars under .score-panel on game finished. -->
+                        </ul>
                     </div>
                     <div class="message-box-body-row">
                         <span>Moves: </span>
@@ -155,7 +164,7 @@
                     </div>
                 </div>
                 <div class="message-box-body-game-right">
-                    <!-- TODO:Apply message-box-body-game-score-bkground for styling-->
+                    <!-- Apply message-box-body-game-score-bkground for styling-->
                     <div class="display-flex-container message-box-body-game-score-container">
                         <p id="message-box-body-game-score" class="message-box-body-game-score hidden">-</p>
                         <!--Progress Ring-->
@@ -179,11 +188,10 @@
                 <input id="btn-message-box-cancel" class="btn btn-message-box btn-message-box-cancel" value="Cancel" type="button" />
             </section>
         </div>
-    </dialog>
+    </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="js/data.js"></script>
     <script src="js/serviceconfig.js"></script>
-    <script src="polyfill/dialog-polyfill.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

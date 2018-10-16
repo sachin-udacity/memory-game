@@ -1,24 +1,18 @@
-/* 
+/*
  * Project:             Memory Game App - MGA
  * Author:              Sachin
  * Date:                5-May-2018
  * Copyright 2018 - Grow with Google Scholarship Front End Nanodegree<2018>
- * TODO: 
- * Uncomment MGA.Helper.startGame()
- * 2:   Update ShortCut Icon
- * 3:   Levels - Beginer(large, 2 matches, timer display) , Intermediate (36) , Adv (small icon, 36, 3 matches)
- * 4:   Disallow select of <i>
- * 5:   Confirmation message box before restart
- * Add copyright at bottom
- * Only one register user can play from machine
- * Set debug to false before submission.
+ * Game Levels - Beginer(2 matches) , Intermediate (36, 2 matches) , Adv (36, 3 matches)
+ * data.js holds the font awesome and google material icons
+ * serviceconfig.js holds the service endpoint
  */
 
 'use strict';
 
 // Class to hold Card
 function Card(matchingId, icon) {
-    this.matchingId = matchingId; // Matching Id will be identical for same card 
+    this.matchingId = matchingId; // Matching Id will be identical for same card
     this.icon = icon;
     this.html = null;
 }
@@ -29,7 +23,6 @@ function User() {
     this.userName = null;
     this.slackName = null;
     this.degreeTrack = null;
-    this.isGuest = null;
     this.userId = null;
 }
 
@@ -55,7 +48,9 @@ function ServiceModel() {
 }
 
 
+// Class for service callback and related helper functions
 const MGA = {
+    // successful user registration callback
     onRegisterUser: function (serviceModel) {
         try {
             if (serviceModel.output.Errors.length === 0) {
@@ -63,31 +58,35 @@ const MGA = {
                 MGA.UI.currentUser.userId = serviceModel.input.userId;
                 serviceModel.input.userId = serviceModel.output.Id;
                 MGA.saveIntoLocalStorage(serviceModel.input.gameLevel, serviceModel.input);
-                MGA.UIHelper.reInitialize(true);
+                MGA.UIHelper.reInitialize(true, true);                
                 MGA.UI.closeModalDialog('message-box-user');
             } else {
                 if (serviceModel.output.Errors[0] === MGA.Consts.USER_EXISTS) {
                     MGA.UIHelper.configureUserDialog();
+                    MGA.UI.showErrorMessage(MGA.Strings.USER_ALREADY_EXISTS);
                 }
             }
-        } 
+        }
         catch(ex) {
             MGA.Helper.logError(ex);
         }
     },
 
+    // successful leader board retrieval callback
     onLeaderBoardGet: function(serviceModel) {
         if (serviceModel.output.Errors.length === 0) {
             MGA.UIHelper.bindLeaderboard(serviceModel.output.Entries);
         }
     },
 
+    // successful leader board insert callback
     onLeaderBoardRecordCreated: function(serviceModel) {
         if (serviceModel.output.Errors.length === 0) {
-            MGA.UIHelper.configureGameDialog(serviceModel);
+            MGA.UIHelper.configureGameDialog(serviceModel.output.Score);
         }
     },
 
+    // get user information from local storage
     getUserInfoFromLocalStorage: function () {
         let currentUser = null;
         if (localStorage[MGA.Consts.LAST_USER_INFO]) {
@@ -96,17 +95,21 @@ const MGA = {
         return currentUser;
     },
 
+    // save information into local storage
     saveIntoLocalStorage: function (gameLevel, user) {
         localStorage[MGA.Consts.LAST_GAME_LEVEL] = gameLevel;
         localStorage[MGA.Consts.LAST_USER_INFO] = JSON.stringify(user);
     }
 };
 
+
+// Class holds all user messages
 MGA.Strings = {
     INVALID_USER_NAME: 'Invalid UserName',
     USER_ALREADY_EXISTS: 'User already exists.'
 }
 
+// Class holds all game constants
 MGA.Consts = {
     DECKS_SET: 2,
     DECK_CARDS_FONT_AWESOME: 1,
@@ -119,15 +122,17 @@ MGA.Consts = {
     GAME_LEVEL_BEGINNER: 1,
     GAME_LEVEL_INTERMEDIATE: 2,
     GAME_LEVEL_ADVANCED: 3,
-    DEBUG: 1,
+    DEBUG: 0,
 
     LAST_USER_INFO: 'Memory-Game-App-Last-User-Info',
     LAST_GAME_LEVEL: 'Memory-Game-App-Game-Level',
     USER_EXISTS: 'UserExists'
 };
 
+// Class to deal with user interface function
 MGA.UI = {
     timer: null,
+    isGuest: false,
     totalCards: 16,
     cardsInSet: 2,
     totalCardsMatched: 0,
@@ -141,6 +146,7 @@ MGA.UI = {
     gameStats: null,
     isLeaderBoardOpen: false,
 
+    // bind page at startup
     bindPage: function () {
         try {
             MGA.UI.currentUser = MGA.getUserInfoFromLocalStorage();
@@ -149,7 +155,7 @@ MGA.UI = {
                 MGA.UIHelper.bindUserInfoDialog(MGA.UI.gameLevel, MGA.UI.currentUser);
                 MGA.UIHelper.enableMessageBoxDialogInputs(false);
             }
-            MGA.UIHelper.reInitialize(false);            
+            MGA.UIHelper.reInitialize(false, true);
             MGA.UI.showModalDialog('message-box-user');
         }
         catch (ex) {
@@ -157,20 +163,40 @@ MGA.UI = {
         }
     },
 
-    restartGame: function (showDialog) {
+    // restarts the game after resetting the UI
+    restartGame: function (showDialog, startTimer) {
         if (showDialog) {
             MGA.UIHelper.resetUserDialog();
             MGA.UI.showModalDialog('message-box-user');
         }
-        MGA.UIHelper.reInitialize(true);
+        MGA.UIHelper.reInitialize(true, startTimer);
     },
 
+    // Update UI in case registration failed.
+    onRegisterUserFailed: function (e) {
+        try {
+            $('#message-box-user-wait-msg').text("Unable to register. Please wait, continuing as guest...");
+            setTimeout(function () {
+                try {
+                    MGA.UI.closeModalDialog('message-box-user');
+                    MGA.UIHelper.reInitialize(true, true);
+                }
+                catch (ex) {
+                    MGA.Helper.logError(ex);
+                }
+            }, 3000);
+        }
+        catch (ex) {
+            MGA.Helper.logError(ex);
+        }
+    },
+
+    // show the user and game finish dialog
     showModalDialog: function (dialogId) {
         try {
             let dialog = document.getElementById(dialogId);
-            dialogPolyfill.registerDialog(dialog);
             if (dialog) {
-                dialog.showModal();
+                dialog.style.display = 'flex';
             }
         }
         catch (ex) {
@@ -178,16 +204,12 @@ MGA.UI = {
         }
     },
 
+    // closes the user and game finish dialog
     closeModalDialog: function (dialogId) {
         try {
             let dialog = document.getElementById(dialogId);
             if (dialog) {
-                dialog.close();
-                // try setting the visibility, if close() is unable to hide the dialog
-                let visibleDialog = $(`#${dialogId}:visible`);
-                if (visibleDialog.length > 0) {
-                    visibleDialog.hide();
-                }
+                dialog.style.display = 'none';
             }
         }
         catch (ex) {
@@ -195,6 +217,7 @@ MGA.UI = {
         }
     },
 
+    // show error message control with passed error msg.
     showErrorMessage: function (errorMsg) {
         try {
             $('#message-box-error').show();
@@ -205,6 +228,7 @@ MGA.UI = {
         }
     },
 
+    // hide error message control.
     hideErrorMessage: function () {
         try {
             $('#message-box-error').hide();
@@ -216,9 +240,11 @@ MGA.UI = {
     }
 };
 
-
+// Holds helper function for UI layer
 MGA.UIHelper = {
-    reInitialize: function (resetTimer) {
+
+    // reintialize the UI and retrieve the leader board
+    reInitialize: function (resetTimer, startTimer) {
         try {
             // start game
             //MGA.Helper.startGame();
@@ -233,7 +259,11 @@ MGA.UIHelper = {
             // restart timer
             if (resetTimer) {
                 MGA.UIHelper.updateTimer(); // reset
-                MGA.UIHelper.startTimer();
+                if (startTimer) {
+                    MGA.UIHelper.startTimer();
+                } else {
+                    MGA.UIHelper.stopTimer();
+                }
             }
             // set game configuration
             MGA.UIHelper.setGameConfiguration();
@@ -243,8 +273,6 @@ MGA.UIHelper = {
             if (MGA.UI.cardsDeck.length > 0) {
                 MGA.UIHelper.createCardsHtml();
             }
-            // set deck size
-            MGA.UIHelper.setDeckSize();
             // apply set specific class
             MGA.UIHelper.applyDeckSpecificClass();
             // reset dialogs
@@ -254,34 +282,17 @@ MGA.UIHelper = {
             MGA.Helper.logError(ex);
         }
     },
-    
-    setDeckSize: function(e) {
-        try {
-            const margins = 150;
-            const width = document.documentElement.clientWidth;
-            const height = document.documentElement.clientHeight;
-            let dim = (width > height ? height : width) - margins;            
-            if (height < width) {
-                dim = dim - $('header').height();
-            } else {
-                $('header').css('margin-bottom', '75px');                
-            }
-            $('ul#deck-cards').width(dim);
-            $('ul#deck-cards').height(dim);
-        }
-        catch (ex) {
-            MGA.Helper.logError(ex);
-        }
-    },
 
+    // update card class based on game level.
     applyDeckSpecificClass: function () {
         if (MGA.UI.totalCards === MGA.Consts.LARGER_DECK) {
-            $('#deck-cards .card').removeClass('card-size-24x24').addClass('card-size-16x16');
+            $('#deck-cards .card').removeClass('card-size-smaller-deck').addClass('card-size-larger-deck');
         } else {
-            $('#deck-cards .card').removeClass('card-size-16x16').addClass('card-size-24x24');
+            $('#deck-cards .card').removeClass('card-size-larger-deck').addClass('card-size-smaller-deck');
         }
     },
 
+    // initialize game config like total cards and number of carsd in unique set based on game level
     setGameConfiguration: function () {
         let gameLevel = parseInt(MGA.UI.gameLevel);
         switch (gameLevel) {
@@ -303,6 +314,7 @@ MGA.UIHelper = {
         }
     },
 
+    // resets the game stats
     resetData: function() {
         if (MGA.UI.gameStats) {
             delete MGA.UI.gameStats;
@@ -314,13 +326,18 @@ MGA.UIHelper = {
         MGA.UI.hidingInProgress = false;
     },
 
+    // resets the modal dialogs
     resetDialogs: function () {
+        $('#message-box-user-wait-msg').text("Please wait starting the game ...");
+        $('#message-box-error').addClass('hidden');
         $('#message-box-game-progress-ring').removeClass('hidden');
         $('#message-box-body-game-score').addClass('hidden');
         $('#message-box-body-game-score').text('-');
         $('.message-box-body-game-score-container').removeClass('message-box-body-game-score-bkground');
+        MGA.UI.hideErrorMessage();
     },
 
+    // based on whether game is played as guest or not, function will be called to disable/enable other controls.
     enableMessageBoxDialogInputs: function(enable) {
         if (enable) {
             $('#message-box-input-user-name').removeAttr('disabled');
@@ -333,6 +350,7 @@ MGA.UIHelper = {
         }
     },
 
+    // gets info from the dialog
     getUserInfoFromDialog: function() {
         let user = new User();
         user.userId = $('#message-box-input-user-id').val();
@@ -342,11 +360,17 @@ MGA.UIHelper = {
         return user;
     },
 
+    // set isguest flag
+    setIsGuest: function() {
+        let isGuestBoxChecked = $("#message-box-is-guest").is(':checked');
+        MGA.UI.isGuest = isGuestBoxChecked;
+        return isGuestBoxChecked;
+    },
+
+    // use to start the game timer
     startTimer: function () {
-        // clear timer
-        if (MGA.UI.timer) {
-            clearInterval(MGA.UI.timer);
-        }
+        // clear and stop timer
+        MGA.UIHelper.stopTimer();
         // start timer
         MGA.UI.timer = setInterval(function () {
             try {
@@ -359,11 +383,21 @@ MGA.UIHelper = {
         }, 1000);
     },
 
+    // updates the displayed html time element
     updateTimer: function() {
         let timeString = MGA.UIHelper.getTimeElapsedString();
         $('.timer').text(timeString);
     },
 
+    // stops the timer
+    stopTimer: function() {
+        if (MGA.UI.timer) {
+            clearInterval(MGA.UI.timer);
+            MGA.UI.timer = null;
+        }
+    },
+
+    // initialize the user info dialog at startup
     bindUserInfoDialog: function (gameLevel, user) {
         $("#message-box-input-game-level").val(gameLevel);
         $("#message-box-input-user-name").val(user.userName);
@@ -371,6 +405,7 @@ MGA.UIHelper = {
         $("#message-box-input-degree-track").val(user.degreeTrack);
     },
 
+    // intitiaze side bar for leaderboard based on server response.
     bindLeaderboard: function(leaderboardEntries) {
         if (leaderboardEntries.length === 0) return;
 
@@ -399,31 +434,41 @@ MGA.UIHelper = {
         });
     },
 
+    // creates a leader board html element
     getLeaderBoardEntryHtml: function (entry) {
-        return (`<div class="leaderboard-entry"><div class="lb-user">${entry.UserName}</div><div class="lb-track">${entry.DegreeTrack}</div><div class="lb-score">${entry.Score}</span></div>`);
+        return (`<li class="leaderboard-entry-container">
+                    <div class="leaderboard-entry">
+                        <div class="lb-user">${entry.UserName}</div>
+                        <div class="lb-score">${entry.Score}</span>
+                    </div>
+                 </li>`);
     },
 
+    // resets the dialogs to initial state.
     resetUserDialog: function () {
         $("#btn-message-box-play").removeAttr('disabled');
         $('#message-box-user #message-box-progress-ring').addClass('hidden');
         $('#message-box-user #message-box-content').removeClass('hidden');
     },
 
+    // configure startup dialog after progress complete like user registration or after leaderboard update.
     configureUserDialog: function () {
         MGA.UIHelper.enableMessageBoxDialogInputs(true);
-        $("#btn-message-box-play").removeAttr('disabled');        
+        $("#btn-message-box-play").removeAttr('disabled');
         $('#message-box-user #message-box-progress-ring').addClass('hidden');
         $('#message-box-user #message-box-content').removeClass('hidden');
         $('#message-box-error').removeClass('hidden');
     },
 
-    configureGameDialog: function (serviceModel) {
+    // configure game finish dialog after progress complete like user registration or after leaderboard update.
+    configureGameDialog: function (score) {
         $('#message-box-game-progress-ring').addClass('hidden');
         $('#message-box-body-game-score').removeClass('hidden');
-        $('#message-box-body-game-score').text(serviceModel.output.Score);
+        $('#message-box-body-game-score').text(score);
         $('.message-box-body-game-score-container').addClass('message-box-body-game-score-bkground');
     },
 
+    // forms formatted time string for display.
     getTimeElapsedString: function () {
         let timeElapsed = MGA.UI.gameStats.timeElapsed;
         let secs = timeElapsed;
@@ -434,10 +479,13 @@ MGA.UIHelper = {
         }
         secs = secs.toString().padStart(2, 0);
         mins = mins.toString().padStart(2, 0);
-        let timeString = `${mins}:${secs}`;
+        let timeString = `${mins}m:${secs}s`;
         return timeString;
     },
 
+    // create html deck of cards based on user inputs.
+    // deck can be created out of font-awesome or google material icon
+    // which are randomly selected inside the function.
     createDeckOfCard: function () {
         // empty the existing cards
         MGA.UI.cardsDeck = [];
@@ -477,15 +525,17 @@ MGA.UIHelper = {
         }
     },
 
+    // create html elements for card
     createCardsHtml: function () {
         const deck = $('.deck');
-        deck.empty(); // remove existing cards.       
+        deck.empty(); // remove existing cards.
         for (let card of MGA.UI.cardsDeck) {
             let cardHtml = MGA.UIHelper.getCardHtml(card);
             deck.append(cardHtml);
         }
     },
 
+    // create html card element.
     getCardHtml: function (card) {
         let cardHtml = null;
         if (MGA.UI.activeDeck === MGA.Consts.DECK_CARDS_FONT_AWESOME) {
@@ -499,11 +549,13 @@ MGA.UIHelper = {
         }
         return cardHtml;
     },
-     
+
+    // shows card
     showCard: function (card) {
         card.addClass('open show');
     },
 
+    // hide card.
     hideCards: function (cards, delayTime) {
         delayTime = (delayTime ? delayTime : 0);
         //card.delay(delayTimeInSecs * 1000).removeClass("show");
@@ -516,6 +568,7 @@ MGA.UIHelper = {
         }, delayTime);
     },
 
+    // verify and update the deck on card click for Beginner and Intermediate level
     verifyUpdateOnCardClickedInTwoCardsSetMatches: function (card) {
         if (MGA.UI.lastCardClicked !== null && MGA.UI.lastCardClicked !== card) {
             let cardMatchingClass = card.attr('class').toString();
@@ -539,6 +592,7 @@ MGA.UIHelper = {
         }
     },
 
+    // verify and update the deck on card click for Advanced Level
     verifyUpdateCardClickedInThreeCardsSetMatches: function (card) {
         if (MGA.UI.lastCardClicked !== null && MGA.UI.lastToLastCardClicked !== null &&
             MGA.UI.lastCardClicked !== card && MGA.UI.lastToLastCardClicked !== card) {
@@ -566,55 +620,89 @@ MGA.UIHelper = {
             MGA.UI.lastToLastCardClicked = MGA.UI.lastCardClicked;
             MGA.UI.lastCardClicked = card;
         }
-    }, 
+    },
 
+    // displays congratulation message if game is solved.
     showCongratulationMessageIfSolved: function() {
         if (MGA.UI.totalCardsMatched === MGA.UI.totalCards) {
             // update the controls in message dialog box
             $('.message-box-game-moves').text(MGA.UI.gameStats.moveCount);
             let timeElapsedString = MGA.UIHelper.getTimeElapsedString();
             $('.message-box-game-time-elapsed').text(timeElapsedString);
-            $('.message-box-game-rating').text(MGA.UI.gameStats.moveCount);
-            clearInterval(MGA.UI.timer);
-            MGA.UI.timer = null;
+            MGA.UIHelper.copyRatings(MGA.UI.gameStats.moveCount, true);
+            MGA.UIHelper.stopTimer();
             MGA.UI.showModalDialog('message-box-game');
-            MGA.Helper.insertIntoLeaderBoard(MGA.UI.gameLevel, MGA.UI.currentUser, MGA.UI.gameStats, MGA.onLeaderBoardRecordCreated);
+            if (MGA.UI.isGuest === false) {
+                MGA.Helper.insertIntoLeaderBoard(MGA.UI.gameLevel, MGA.UI.currentUser, MGA.UI.gameStats, MGA.onLeaderBoardRecordCreated);
+            } else {
+                MGA.UIHelper.gameFinished();
+            }
         }
     },
 
+    // update the move display
     updateMoves: function (moveCount) {
         $('.moves').text(`${moveCount} Moves`);
     },
 
+    // update the ratings display
     updateRatings: function (moveCount, reset) {
+        // empties all stars
         if (reset === true) {
-            $('.stars li>i').removeClass('fa-star-o').addClass('fa-star');
-            return;
+            $('.score-panel .stars li>i').removeClass('fa-star-o').addClass('fa-star');
+                return;
         }
 
-        let ratingLevels = GameStats.RATING_CHART[MGA.UI.gameLevel];
+        // fill the remaining ones based on move count and game level.
+        let ratingLevels = GameStats.RATING_CHART[parseInt(MGA.UI.gameLevel) - 1];
         let levelCount = ratingLevels.levels.length;
         for (let level = 0; level < levelCount; ++level) {
             if (moveCount === ratingLevels.levels[level]) {
-                $('.stars li').eq(levelCount - (level + 1))
+                $('.score-panel .stars li').eq(levelCount - (level + 1))
                     .find('i')
                     .removeClass('fa-star')
                     .addClass('fa-star-o');
-                break;                
+                break;
             }
         }
+        // minimum rating is one star.
+        if ($('.score-panel .stars li>i.fa-star').length === 0) {
+            $('.score-panel .stars li').eq(0)
+                        .find('i')
+                        .removeClass('fa-star-o')
+                        .addClass('fa-star');
+        }
+    },
+
+    // clone the ratings from main display to dialog box.
+    copyRatings: function () {
+        $('.message-box-game-rating.stars li').empty();
+        $('.message-box-game-rating.stars').append($('.stars li').clone());
+    },
+
+    // display game over dialog in case user is playing in guest mode.
+    gameFinished: function() {
+        // added time out just for demo purpose.
+        setTimeout(function() {
+            try {
+                const score = MGA.Helper.calculateScore();
+                MGA.UIHelper.configureGameDialog(score);
+            }
+            catch (ex) {
+                MGA.Helper.logError(ex);
+            }
+        }, 3000);
     }
 };
 
 MGA.Events = {
+    // subscribe to page events
     bindEvents: function () {
         try {
-            // resize event
-            window.addEventListener("resize", MGA.Events.onWindowResize, false);
             // bind event when card is clicked.
             $('.deck').on('click', 'li', MGA.Events.onCardClicked);
             // bind event when restart is clicked.
-            $('.restart').click(MGA.Events.onRestartClicked);
+            $('.restart i').click(MGA.Events.onRestartClicked);
             $("#btn-message-box-play").click(MGA.Events.onMessageBoxPlayClicked);
             // bind event to message box start over button
             $('#btn-message-box-start-over').click(MGA.Events.onMessageBoxStartOverClicked);
@@ -625,29 +713,14 @@ MGA.Events = {
             //bind event to leader board
             $("#btn-show-leaderboard").click(MGA.Events.onShowLeaderBoardClicked);
             $("#btn-leaderboard-section-close").click(MGA.Events.onCloseLeaderBoardClicked);
-            $(document).click(MGA.Events.onCloseLeaderBoardClicked);            
+            $(document).click(MGA.Events.onCloseLeaderBoardClicked);
         }
         catch (ex) {
             MGA.Helper.logError(ex);
         }
     },
 
-    onWindowResize: function(e) {
-        try {
-            if (!MGA.Events.resizeSetTimeout) {
-                // From MDN
-                MGA.Events.resizeSetTimeout = setTimeout(function() {
-                    MGA.Events.resizeSetTimeout = null;
-                    MGA.UIHelper.setDeckSize();
-                   // The actualResizeHandler will execute at a rate of 15fps
-                   }, 66);
-            }
-        }
-        catch (ex) {
-            MGA.Helper.logError(ex);
-        }
-    },
-    
+    // handles card click
     onCardClicked: function(e) {
         try {
             // continue only if hiding card is finished
@@ -679,59 +752,69 @@ MGA.Events = {
         }
     },
 
+    // handle restart button click
     onRestartClicked: function (e) {
         try {
-            MGA.UI.restartGame(true);
+            MGA.UI.restartGame(true, false);
         }
         catch (ex) {
             MGA.Helper.logError(ex);
         }
     },
 
+    // handles game play click
     onMessageBoxPlayClicked: function(e) {
         try {
-            let isGuestBoxChecked = $("#message-box-is-guest").is(':checked');
+            // check if it is played in guest mode and skips the user registation/validation.
+            const isGuest = MGA.UIHelper.setIsGuest();
             MGA.UI.gameLevel = $("#message-box-input-game-level").val();
             MGA.UIHelper.setGameConfiguration();
-            if (isGuestBoxChecked === true) {
-                //MGA.UIHelper.startTimer(); // start timer
+            if (isGuest === true) {
                 MGA.UI.closeModalDialog("message-box-user");
-                MGA.UI.restartGame(false);
+                MGA.UI.restartGame(false, true);
                 return;
             }
 
+            // configure startup dialog box
             $("#message-box-content").addClass('hidden');
             $("#message-box-progress-ring").removeClass('hidden');
             $("#btn-message-box-play").attr('disabled', 'disabled');
             let gameLevel = $('#message-box-input-game-level').val();
             let user = MGA.UIHelper.getUserInfoFromDialog();
             if (user.userName === MGA.Consts.EMPTY_STR) {
-                MGA.UI.showErrorMessage(MGA.Strings.INVALID_USER_NAME);
                 MGA.UIHelper.configureUserDialog();
+                MGA.UI.showErrorMessage(MGA.Strings.INVALID_USER_NAME);
                 return;
             }
 
+            // get existing user info from local storage
             let lastUser = MGA.getUserInfoFromLocalStorage();
             if (lastUser !== null && user.userName === lastUser.userName) {
                 user.userId = lastUser.userId;
             }
-            MGA.Helper.registerUser(gameLevel, user, MGA.onRegisterUser);
+
+            // pass the info retrieved from above to service to check if new user needs to be created or
+            // existing user is still valid. Validation is done based on unique stored inside local storage.
+            MGA.Helper.registerUser(gameLevel, user, MGA.onRegisterUser, MGA.UI.onRegisterUserFailed);
         }
         catch (ex) {
             MGA.Helper.logError(ex);
         }
     },
 
+    // handles start over button click
     onMessageBoxStartOverClicked: function (e) {
         try {
             MGA.UI.closeModalDialog('message-box-game');
-            MGA.UI.restartGame(true);
+            MGA.UIHelper.setIsGuest();
+            MGA.UI.restartGame(true, false);
         }
         catch (ex) {
             MGA.Helper.logError(ex);
         }
     },
 
+    // handles message box cancel click
     onMessageBoxCancelClicked: function (e) {
         try {
             MGA.UI.closeModalDialog('message-box-game');
@@ -741,10 +824,12 @@ MGA.Events = {
         }
     },
 
+    // handles is guest checkbox change.
     onMessageBoxIsGuestChanged: function (e) {
         try {
             if (!MGA.UI.currentUser) {
                 let isChecked = $(e.target).is(':checked');
+                MGA.UI.gameStats.isGuest = isChecked;
                 MGA.UI.hideErrorMessage();
                 MGA.UIHelper.enableMessageBoxDialogInputs(!isChecked);
             }
@@ -754,17 +839,19 @@ MGA.Events = {
         }
     },
 
+    // handles show leader board button click
     onShowLeaderBoardClicked: function (e) {
         try {
             $('.leaderboard-section').animate({
-                right: 0 
+                right: 0
             }, 1000);
         }
         catch (ex) {
             MGA.Helper.logError(ex);
-        }  
+        }
     },
 
+    // handles close leader board click
     onCloseLeaderBoardClicked: function (e) {
         try {
             // close when clicked outside the leader board flyout
@@ -775,13 +862,13 @@ MGA.Events = {
                 $(e.target).parents('.leaderboard-section').length > 0 ||
                 $(e.target).parents('.btn-show-leaderboard').length > 0 ||
                 id === 'btn-show-leaderboard')
-                && $(e.target).parents('.btn-leaderboard-section-close').length === 0) {     
-                // don't close and return           
+                && $(e.target).parents('.btn-leaderboard-section-close').length === 0) {
+                // don't close and return
                 return;
             }
 
             $('.leaderboard-section').animate({
-                right: "-550px" 
+                right: "-550px"
             }, 300);
         }
         catch (ex) {
@@ -791,6 +878,7 @@ MGA.Events = {
 };
 
 MGA.Helper = {
+    // genearates random number if not present in input set.
     generateRandomNumber: function (max, toExcludeSet) {
         let randomNumber = Math.floor((Math.random() * max) + 1);
         if (toExcludeSet) {
@@ -801,6 +889,7 @@ MGA.Helper = {
         return randomNumber;
     },
 
+    // starts the game
     startGame: function () {
         let currentDate = new Date();
         this.postData(ServiceEndPoints.GameEndPoint, {
@@ -809,6 +898,36 @@ MGA.Helper = {
         });
     },
 
+    // score calculating routine
+    calculateScore: function() {
+        const timeElapsed = MGA.UI.gameStats.timeElapsed;
+        const timeInMins = Math.floor(timeElapsed/60);
+        const timeInSecs = timeElapsed - (timeInMins * 60);
+        const gameLevel = parseInt(MGA.UI.gameLevel);
+        let score = 0;
+        const moves = MGA.UI.gameStats.moveCount;
+        switch(gameLevel) {
+            case MGA.Consts.GAME_LEVEL_BEGINNER:
+                score = 1000 - (moves * 9 + timeInMins * 6 + timeInSecs);
+                break;
+            case MGA.Consts.GAME_LEVEL_INTERMEDIATE:
+                score = 3000 - (moves * 12 + timeInMins * 9 + timeInSecs);
+                break;
+            case MGA.Consts.GAME_LEVEL_ADVANCED:
+                score = 5000 - (moves * 18 + timeInMins * 10 + timeInSecs);
+                break;
+            default:
+                // do nothing
+                break;
+        }
+
+        if (score <= 0)
+            score = 99; // Minimum
+
+        return score;
+    },
+
+    // call service to retrieve leader board
     getLeaderBoard: function (onLeaderBoardGetCallback) {
         let currentDate = new Date();
         let serviceModel = new ServiceModel();
@@ -819,7 +938,8 @@ MGA.Helper = {
         this.postData(ServiceEndPoints.LeaderBoardGetEndPoint, serviceModel, onLeaderBoardGetCallback);
     },
 
-    registerUser: function (gameLevel, user, onRegisterUserCallback) {
+    // call service to register new user or validate existing one
+    registerUser: function (gameLevel, user, onRegisterUserCallback, onRegisterUserFailedCallback) {
         let currentDate = new Date();
         let serviceModel = new ServiceModel();
         serviceModel.input = {
@@ -831,9 +951,10 @@ MGA.Helper = {
             time: currentDate.toLocaleString(),
             timeInfo: currentDate.toString()
         };
-        this.postData(ServiceEndPoints.UserEndPoint, serviceModel, onRegisterUserCallback);
+        this.postData(ServiceEndPoints.UserEndPoint, serviceModel, onRegisterUserCallback, onRegisterUserFailedCallback);
     },
 
+    // call service to enter the new leader board entry
     insertIntoLeaderBoard: function (gameLevel, user, gameStats, onLeaderBoardRecordCreatedCallback) {
         let currentDate = new Date();
         let serviceModel = new ServiceModel();
@@ -848,28 +969,37 @@ MGA.Helper = {
         this.postData(ServiceEndPoints.LeaderBoardInsertEndPoint, serviceModel, onLeaderBoardRecordCreatedCallback);
     },
 
-    postData: function (url, serviceModel, onSuccessCallback) {
-        $.ajax({
-            type: 'get',
-            url: url,
-            data: serviceModel.input,
-            dataType: 'jsonp',
-            success: function (dataRetrieved) {
-                serviceModel.output = dataRetrieved; // set output with data returned
-                if ((dataRetrieved.Errors.length === 0) ||
-                    (dataRetrieved.Errors.length === 1 && dataRetrieved.Errors[0] === MGA.Consts.USER_EXISTS)) {
-                    if (onSuccessCallback) {
-                        onSuccessCallback(serviceModel);
+    // generic function to handle service interaction
+    postData: function (url, serviceModel, onSuccessCallback, onErrorCallback) {
+        try {
+            $.ajax({
+                type: 'get',
+                url: url,
+                data: serviceModel.input,
+                dataType: 'jsonp',
+                success: function (dataRetrieved) {
+                    serviceModel.output = dataRetrieved; // set output with data returned
+                    if ((dataRetrieved.Errors.length === 0) ||
+                        (dataRetrieved.Errors.length === 1 && dataRetrieved.Errors[0] === MGA.Consts.USER_EXISTS)) {
+                        if (onSuccessCallback) {
+                            onSuccessCallback(serviceModel);
+                        }
                     }
-                } 
-                MGA.Helper.logError(dataRetrieved.Errors);
-            },
-            error: function (e) {
-                MGA.Helper.logError(e);
-            }
-        });
+                },
+                error: function (e) {
+                    if (onErrorCallback) {
+                        onErrorCallback(e);
+                    }
+                    MGA.Helper.logError(e);
+                }
+            });
+        }
+        catch (ex) {
+            MGA.Helper.logError(ex);
+        }
     },
 
+    // logs to console in case of DEBUG = 0 mode
     logError(ex) {
         if (MGA.Consts.DEBUG === 0) {
             return;
@@ -879,7 +1009,7 @@ MGA.Helper = {
     }
 };
 
-
+// class to validate the deck creation
 MGA.UnitTests = {
     checkDecksCard: function () {
         let cardsMap = {};
@@ -900,6 +1030,7 @@ MGA.UnitTests = {
 };
 
 
+// function called on document load
 $(document).ready(function () {
     try {
         // bind page
