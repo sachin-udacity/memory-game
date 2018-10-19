@@ -247,7 +247,7 @@ MGA.UIHelper = {
     reInitialize: function (resetTimer, startTimer) {
         try {
             // start game
-            //MGA.Helper.startGame();
+            MGA.Helper.startGame();
             // get leader board
             MGA.Helper.getLeaderBoard(MGA.onLeaderBoardGet);
             // reset data
