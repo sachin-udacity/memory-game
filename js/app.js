@@ -892,10 +892,12 @@ MGA.Helper = {
     // starts the game
     startGame: function () {
         let currentDate = new Date();
-        this.postData(ServiceEndPoints.GameEndPoint, {
+        let serviceModel = new ServiceModel();
+        serviceModel.input = {
             time: currentDate.toLocaleString(),
             timeInfo: currentDate.toString()
-        });
+        };
+        this.postData(ServiceEndPoints.GameEndPoint, serviceModel);
     },
 
     // score calculating routine
