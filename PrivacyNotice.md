@@ -5,6 +5,6 @@ The game requires and stores the following data
 
   *. Player's name and other provided details if the game is not played in guest mode
   
-  *. Game alogrithm specific (no personal information) debugging log messages.
+  *. Game alogrithm stores specific (no personal information) debugging log messages.
 
 All the data is stored on your computer/phone or on server and will not contain any personal information whatsoever.
