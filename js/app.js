@@ -175,7 +175,7 @@ MGA.UI = {
     // Update UI in case registration failed.
     onRegisterUserFailed: function (e) {
         try {
-            $('#message-box-user-wait-msg').text("Unable to register. Please wait, continuing as guest...");
+            $('#message-box-user-wait-msg').text("Unable to register (Reason: Free hosting doesn't support Cross Origin request). Please wait, continuing as guest...");
             setTimeout(function () {
                 try {
                     MGA.UI.closeModalDialog('message-box-user');
