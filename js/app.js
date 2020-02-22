@@ -132,6 +132,7 @@ MGA.Consts = {
 // Class to deal with user interface function
 MGA.UI = {
     timer: null,
+    isUserRegistrationSuccess: true,
     isGuest: false,
     totalCards: 16,
     cardsInSet: 2,
@@ -144,7 +145,7 @@ MGA.UI = {
     gameLevel: 1,
     currentUser: null,
     gameStats: null,
-    isLeaderBoardOpen: false,
+    isLeaderBoardOpen: false,    
 
     // bind page at startup
     bindPage: function () {
@@ -175,6 +176,7 @@ MGA.UI = {
     // Update UI in case registration failed.
     onRegisterUserFailed: function (e) {
         try {
+            MGA.UI.isUserRegistrationSuccess = false;
             $('#message-box-user-wait-msg').text("Unable to register (Reason: Free service host doesn't support Cross Origin request). Please wait, continuing as guest...");
             setTimeout(function () {
                 try {
@@ -632,7 +634,7 @@ MGA.UIHelper = {
             MGA.UIHelper.copyRatings(MGA.UI.gameStats.moveCount, true);
             MGA.UIHelper.stopTimer();
             MGA.UI.showModalDialog('message-box-game');
-            if (MGA.UI.isGuest === false) {
+            if (MGA.UI.isGuest === false && MGA.UI.isUserRegistrationSuccess === true) {
                 MGA.Helper.insertIntoLeaderBoard(MGA.UI.gameLevel, MGA.UI.currentUser, MGA.UI.gameStats, MGA.onLeaderBoardRecordCreated);
             } else {
                 MGA.UIHelper.gameFinished();
