@@ -108,7 +108,7 @@
     /*message box user*/
     .message-box-user .message-box-container {
         width: 340px;
-        height: 400px;
+        height: 270px;
     }
 
     .message-box-input, .message-box-input:focus {
@@ -241,7 +241,7 @@
 
     .message-box-user .message-box-container {
         width: 400px;
-        height: 450px;
+        height: 320px;
     }
 
 
